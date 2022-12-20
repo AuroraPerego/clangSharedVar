@@ -1,26 +1,22 @@
 CLANG := clang++-14
 CUDA_BASE := /usr/local/cuda-11.5.0
 CUDA_LIBDIR := $(CUDA_BASE)/lib64
-CUDA-ARCH := 50 60 70
-CLANG_FLAGS := -x cuda -std=c++17 -O3 -g -include noinline.h -Wno-deprecated-declarations  -fPIC -I$(CUDA_BASE)/include $(foreach ARCH,$(CUDA_ARCH), --cuda-gpu-arch=sm_$(ARCH))
+CUDA_ARCH := 60
+CLANG_FLAGS := -x cuda -std=c++17 -O3 -g -fPIC -include noinline.h -Wno-deprecated-declarations --cuda-path=$(CUDA_BASE) -I$(CUDA_BASE)/include $(foreach ARCH,$(CUDA_ARCH), --cuda-gpu-arch=sm_$(ARCH))
 CLANG_LDFLAGS := -L$(CUDA_LIBDIR) -lcudart -ldl -lrt -O3 -fPIC -pthread -Wl,-E -lstdc++fs
 
 SRCS    = $(wildcard *.cu)
 OBJS = $(patsubst %.cu,%.o,$(SRCS))
 %.o: %.cu
-	@[ -d $(@D) ] || mkdir -p $(@D)
-	$(CLANG) $(CLANG_FLAGS) -c $< -o $@ -MMD
+	$(CLANG) $(CLANG_FLAGS) -c $< -o $@
 
 .PHONY: all
 all: $(patsubst %.o,%,$(OBJS))
 %: %.o
-	@[ -d $(@D) ] || mkdir -p $(@D)
 	$(CLANG) $(CLANG_LDFLAGS) $< -o $@
 
-.PRECIOUS: %.o
-
 clean:
-	rm -fR $(OBJS) $(patsubst %.o,%.d,$(OBJS)) $(patsubst %.o,%,$(OBJS))
+	rm -fR $(patsubst %.o,%,$(OBJS))
 
 environment: env.sh
 env.sh: Makefile
