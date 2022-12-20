@@ -1,0 +1,5 @@
+env.sh
+test
+test.d  
+test.o
+.original_env
